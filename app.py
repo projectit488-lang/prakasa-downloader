@@ -61,12 +61,25 @@ if st.button("Proses Video", type="primary", use_container_width=True):
         # Reset state unduhan sebelumnya
         st.session_state["download_data"] = None
 
-        # Menggunakan direktori sementara agar tidak menumpuk file sampah di komputer
+        # Menggunakan direktori sementara agar tidak menumpuk file sampah di server
         with tempfile.TemporaryDirectory() as temp_dir:
             out_template = os.path.join(temp_dir, '%(title)s.%(ext)s')
 
+            # Opsi umum untuk melewati proteksi/pemblokiran 403 Forbidden YouTube
+            common_opts = {
+                'quiet': True,
+                'no_warnings': True,
+                'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+                'extractor_args': {
+                    'youtube': {
+                        'player_client': ['android', 'web'],
+                    }
+                }
+            }
+
             if option == "MP3 (Audio)":
                 ydl_opts = {
+                    **common_opts,
                     'format': 'bestaudio/best',
                     'outtmpl': out_template,
                     'postprocessors': [{
@@ -74,19 +87,18 @@ if st.button("Proses Video", type="primary", use_container_width=True):
                         'preferredcodec': 'mp3',
                         'preferredquality': selected_quality,
                     }],
-                    'quiet': True,
                 }
             else:
-                # Format string untuk membatasi resolusi maksimum sesuai pilihan user
+                # Format string untuk membatasi resolusi maksimum sesuai pilihan pengguna
                 format_str = (
                     f'bestvideo[height<={selected_quality}][ext=mp4]+bestaudio[ext=m4a]/'
                     f'best[height<={selected_quality}][ext=mp4]/best[height<={selected_quality}]/best'
                 )
                 ydl_opts = {
+                    **common_opts,
                     'format': format_str,
                     'outtmpl': out_template,
                     'merge_output_format': 'mp4',
-                    'quiet': True,
                 }
 
             try:
